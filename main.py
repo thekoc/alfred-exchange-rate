@@ -1,29 +1,34 @@
-# -*- coding: utf-8 -*-
+# coding=utf-8
 
 from alfred_xml import AlfredXmlGenerator
 from finance_data_operator import FinanceDataOperator
 import os
 import subprocess
 import sys
-import re
+
+# f_handle = open('display', 'w')
+# x = sys.stdout.encoding
+# sys.stdout = f_handle
+# w_handle = open('error', 'w')
+# sys.stderr = w_handle
 
 FINANCE_URL = 'http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote?format=json'
 FINANCE_FILE = 'exchange_rate.json'
 MAP_FILE = 'chinese_code_map.json'
 CHECK_FREQUENCE = 7
-DEFAULT_CURRENCY = ['CNY', 'JPY', 'USD']
+DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['JPY', 'USD', 'HKD']}
 ACCURACY = 3
+pwd = os.getcwd()
+pic_path = os.path.join(pwd, 'flags')
+default_icon = os.path.join(pic_path, 'DEFAULT.png')
 
 
-def combination_of_list(l, list_):
-    if l == 0:
-        return [[]]
-    elif list_ == []:
-        return []
+def combination_of_list(l, dic):
     result = []
-    for i, t in enumerate(list_):
-        new_list = list_[:i] + list_[i+1:]
-        result += ([[t] + j for j in combination_of_list(l-1, new_list)])
+    for m in dic['main']:
+        for s in dic['sub']:
+            result.append([m, s])
+            result.append([s, m])
     return result
 
 
@@ -40,34 +45,32 @@ def get_newest_data():
     days = do.days_til_now()
     if days > CHECK_FREQUENCE:
         do = download_data()
-
     return do
 
 
 def get_argv():
-    # AlfredXmlGenerator.print_error('Unknown Error', str(sys.argv[1]))
     if len(sys.argv) == 1:
         return None
     else:
-        raw_argv = sys.argv[1]
-        if raw_argv[-1] == ' ':
-            raw_argv = raw_argv[:-1]
-        argv = re.split(r'\s+', raw_argv)
-        return argv
+        return sys.argv[1:]
 
 
 def print_result(result):
     alfred_xml = AlfredXmlGenerator()
 
     for i in result:
-        display_text = i['from'] + '->' + i['to']
-        alfred_xml.add_item(display_text, str(i['price']))
+        display_text = i['from'] + ' -> ' + i['to']
+        icon_path = os.path.join(pic_path, i['from']+'.png')
+        if os.path.isfile(icon_path):
+            alfred_xml.add_item(display_text, str(i['price']), icon=icon_path)
+        else:
+            alfred_xml.add_item(display_text, str(i['price']), icon=default_icon)
     alfred_xml.print_xml()
 
 
 def check_syntax(argv, do):
     synatax_error = SyntaxError()
-    synatax_error.text = 'usage: <from_code> <to_code> <amount> or <country> <country> <amount> or <amount>'
+    synatax_error.text = 'usage: <code> <code> <amount> or <country> <country> <amount> or <amount>'
     if len(argv) == 1:
         try:
             float(argv[0])
@@ -118,5 +121,5 @@ if __name__ == '__main__':
         AlfredXmlGenerator.print_error('Incorrect Syntax', e.text)
     except KeyError as e:
         AlfredXmlGenerator.print_error('Invalid Key', e.text)
-    except:
-        AlfredXmlGenerator.print_xml('Unknown', 'a')
+    # except:
+    #     AlfredXmlGenerator.print_error('Unknown', 'a')

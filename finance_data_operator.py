@@ -21,9 +21,8 @@ class FinanceDataOperator(object):
 
     def get_rate(self, name):
         def contain_chinese(check_str):
-            for ch in check_str:
-                if u'\u4e00' <= ch <= u'\u9fff':
-                    return True
+            return all(u'\u4e00' <= char <= u'\u9fff' for char in check_str)
+
         if name is None:
             return
         elif contain_chinese(name):

@@ -22,9 +22,9 @@
 				<key>argumenttype</key>
 				<integer>0</integer>
 				<key>escaping</key>
-				<integer>4</integer>
+				<integer>68</integer>
 				<key>keyword</key>
-				<string>er</string>
+				<string>cc</string>
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
@@ -34,13 +34,12 @@
 				<key>queuemode</key>
 				<integer>1</integer>
 				<key>script</key>
-				<string>query="{query}"
-
-/usr/local/bin/python3 main.py $query</string>
+				<string>export LANG="en_US.UTF-8"
+/usr/local/bin/python3 main.py {query}</string>
 				<key>title</key>
-				<string>a</string>
+				<string>hi</string>
 				<key>type</key>
-				<integer>5</integer>
+				<integer>0</integer>
 				<key>withspace</key>
 				<true/>
 			</dict>
