@@ -3,21 +3,21 @@
 from alfred_xml import AlfredXmlGenerator
 from finance_data_operator import FinanceDataOperator
 import os
-import subprocess
 import sys
+import urllib
 
-# f_handle = open('display', 'w')
+# f_handle = open('display.out', 'w')
 # x = sys.stdout.encoding
 # sys.stdout = f_handle
-# w_handle = open('error', 'w')
-# sys.stderr = w_handle
+w_handle = open('error.out', 'w')
+sys.stderr = w_handle
 
 FINANCE_URL = 'http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote?format=json'
 FINANCE_FILE = 'exchange_rate.json'
-MAP_FILE = 'chinese_code_map.json'
+MAP_FILE = 'codes_map.json'
 CHECK_FREQUENCE = 7
-DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['JPY', 'USD', 'HKD']}
 ACCURACY = 3
+DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['JPY', 'USD', 'HKD']}
 pwd = os.getcwd()
 pic_path = os.path.join(pwd, 'flags')
 default_icon = os.path.join(pic_path, 'DEFAULT.png')
@@ -32,9 +32,13 @@ def combination_of_list(l, dic):
     return result
 
 
+def abs_path(path):
+    return os.path.join(pwd, path)
+
+
 def get_newest_data():
     def download_data():
-        subprocess.call(['wget', '-c', FINANCE_URL, '-O', FINANCE_FILE])
+        urllib.urlretrieve(FINANCE_URL, FINANCE_FILE)
         return FinanceDataOperator(FINANCE_FILE, MAP_FILE)
 
     if not os.path.isfile(FINANCE_FILE):
@@ -79,7 +83,7 @@ def check_syntax(argv, do):
     elif len(argv) == 3:
         for i in range(2):
             currency = argv[i]
-            if do.get_rate(currency) is None:
+            if do.get_multifunctional(currency) is None:
                 key_error = KeyError()
                 key_error.key = currency
                 key_error.text = "Can't find key: %s" % currency
@@ -92,25 +96,38 @@ def check_syntax(argv, do):
         raise synatax_error
 
 
+def type_of(argv):
+    if argv is None:
+        return
+    elif len(argv) == 1:
+        return 'default'
+    elif len(argv) == 3:
+        return 'normal'
+
+
 def main():
     do = get_newest_data()
     argv = get_argv()
     check_syntax(argv, do)
     result = []
-    if argv is None:
+    if type_of(argv) is None:
         return
-    elif len(argv) == 1:
+    elif type_of(argv) == 'default':
         amount = float(argv[0])
         for i in combination_of_list(2, DEFAULT_CURRENCY):
             t = {}
             t = do.trans_currency(i[0], i[1], amount, ACCURACY)
             result.append(t)
-    elif len(argv) == 3:
-        from_ = argv[0]
-        to = argv[1]
+    elif type_of(argv) == 'normal':
+        from_ = do.map_to_code(argv[0])
+        to = do.map_to_code(argv[1])
         amount = float(argv[2])
         t = do.trans_currency(from_, to, amount, ACCURACY)
         result.append(t)
+        t = do.trans_currency(to, from_, amount, ACCURACY)
+        result.append(t)
+    elif type_of(argv) == 'single':
+        pass
 
     print_result(result)
 
@@ -121,5 +138,7 @@ if __name__ == '__main__':
         AlfredXmlGenerator.print_error('Incorrect Syntax', e.text)
     except KeyError as e:
         AlfredXmlGenerator.print_error('Invalid Key', e.text)
+    except UnicodeDecodeError:
+        AlfredXmlGenerator.print_error("Sorry...", "But we don't support Chinese... yet")
     # except:
     #     AlfredXmlGenerator.print_error('Unknown', 'a')

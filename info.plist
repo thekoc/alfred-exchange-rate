@@ -33,9 +33,11 @@
 				<integer>0</integer>
 				<key>queuemode</key>
 				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Please Wait...</string>
 				<key>script</key>
 				<string>export LANG="en_US.UTF-8"
-/usr/local/bin/python3 main.py {query}</string>
+python main.py {query}</string>
 				<key>title</key>
 				<string>hi</string>
 				<key>type</key>
