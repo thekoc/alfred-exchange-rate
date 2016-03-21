@@ -9,11 +9,19 @@ class FinanceDataOperator(object):
         with open(map_name, 'r') as f:
             self.maps = json.load(f)
 
-    def __get_currency_from_name(self, country):
-        return self.maps['name_to_currency'].get(country)
+    def __get_currency_from_name(self, name):
+        return self.maps['name_to_currency'].get(name)
 
-    def __get_currency_from_code(self, country):
-        return self.maps['code_to_currency'].get(country)
+    def __get_currency_from_code(self, code):
+        return self.maps['code_to_currency'].get(code)
+
+    def get_currency_from_anything(self, anything):
+        if self.__get_currency_from_code(anything):
+            return self.__get_currency_from_code(anything)
+        elif self.__get_currency_from_name(anything):
+            return self.__get_currency_from_name(anything)
+        else:
+            return anything
 
     def get_time(self):
         raw_time = self.resources[0]['resource']['fields']['utctime']

@@ -138,6 +138,13 @@ def type_of(argv):
         return 'single'
 
 
+def format_result(result, do):
+    for i in result:
+        for key in i:
+            if do.get_currency_from_anything(i[key]) != 'EUR':
+                i[key] = do.get_currency_from_anything(i[key])
+
+
 def main():
     do = get_newest_data()
     argv = get_argv()
@@ -170,6 +177,7 @@ def main():
     elif type_of(argv) == 'set_default':
         DEFAULT_CURRENCY['main'] = argv[2]
 
+    format_result(result, do)
     print_result(result)
 
 if __name__ == '__main__':
