@@ -9,15 +9,15 @@ import urllib
 # f_handle = open('display.out', 'w')
 # x = sys.stdout.encoding
 # sys.stdout = f_handle
-w_handle = open('error.out', 'w')
-sys.stderr = w_handle
+# w_handle = open('error.out', 'w')
+# sys.stderr = w_handle
 
 FINANCE_URL = 'http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote?format=json'
 FINANCE_FILE = 'exchange_rate.json'
 MAP_FILE = 'codes_map.json'
 CHECK_FREQUENCE = 7
 ACCURACY = 3
-DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['JPY', 'USD', 'HKD', 'EUR', 'CNY']}
+DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['CNY', 'JPY', 'USD', 'HKD', 'EUR']}
 pwd = os.getcwd()
 pic_path = os.path.join(pwd, 'flags')
 default_icon = os.path.join(pic_path, 'DEFAULT.png')
@@ -74,10 +74,30 @@ def print_result(result):
     alfred_xml.print_xml()
 
 
+def check_set_syntax(argv, do):
+    synatax_error = SyntaxError()
+    synatax_error.text = 'usage: set default <country_code>'
+    if argv[0] == 'SET':
+        if 'DEFAULT' in argv:
+            if len(argv) == 3:
+                if do.get_multifunctional(argv[2]) is None:
+                    currency = argv[2]
+                    key_error = KeyError()
+                    key_error.key = currency
+                    key_error.text = "Can't find key: %s" % currency
+                    raise key_error
+            else:
+                raise synatax_error
+        else:
+            raise synatax_error
+
+
 def check_syntax(argv, do):
     synatax_error = SyntaxError()
     synatax_error.text = 'usage: <code> <code> <amount> or <country> <country> <amount> or <amount>'
-    if len(argv) == 1:
+    if 'SET' == argv[0]:
+        check_set_syntax(argv, do)
+    elif len(argv) == 1:
         try:
             float(argv[0])
         except ValueError:
@@ -108,6 +128,8 @@ def check_syntax(argv, do):
 def type_of(argv):
     if argv is None:
         return
+    elif len(argv) == 3 and argv[0] == 'SET' and argv[1] == 'DEFAULT':
+        return 'set_default'
     elif len(argv) == 1:
         return 'default'
     elif len(argv) == 3:
@@ -145,6 +167,8 @@ def main():
             t = {}
             t = do.trans_currency(i[0], i[1], amount, ACCURACY)
             result.append(t)
+    elif type_of(argv) == 'set_default':
+        DEFAULT_CURRENCY['main'] = argv[2]
 
     print_result(result)
 
@@ -157,5 +181,5 @@ if __name__ == '__main__':
         AlfredXmlGenerator.print_error('Invalid Key', e.text)
     except UnicodeDecodeError:
         AlfredXmlGenerator.print_error("Sorry...", "But we don't support Chinese... yet")
-    except:
-        AlfredXmlGenerator.print_error('Unknown', 'a')
+    # except:
+    #     AlfredXmlGenerator.print_error('Unknown', 'a')
