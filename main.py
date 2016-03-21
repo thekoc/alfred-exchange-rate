@@ -17,7 +17,7 @@ FINANCE_FILE = 'exchange_rate.json'
 MAP_FILE = 'codes_map.json'
 CHECK_FREQUENCE = 7
 ACCURACY = 3
-DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['JPY', 'USD', 'HKD']}
+DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['JPY', 'USD', 'HKD', 'EUR', 'CNY']}
 pwd = os.getcwd()
 pic_path = os.path.join(pwd, 'flags')
 default_icon = os.path.join(pic_path, 'DEFAULT.png')
@@ -27,8 +27,9 @@ def combination_of_list(l, dic):
     result = []
     for m in dic['main']:
         for s in dic['sub']:
-            result.append([m, s])
-            result.append([s, m])
+            if s != m:
+                result.append([m, s])
+                result.append([s, m])
     return result
 
 
@@ -56,7 +57,8 @@ def get_argv():
     if len(sys.argv) == 1:
         return None
     else:
-        return sys.argv[1:]
+        argv = [i.upper() for i in sys.argv[1:]]
+        return argv
 
 
 def print_result(result):
@@ -80,6 +82,13 @@ def check_syntax(argv, do):
             float(argv[0])
         except ValueError:
             raise synatax_error
+    elif len(argv) == 2:
+        currency = argv[0]
+        if do.get_multifunctional(currency) is None:
+            key_error = KeyError()
+            key_error.key = currency
+            key_error.text = "Can't find key: %s" % currency
+            raise key_error
     elif len(argv) == 3:
         for i in range(2):
             currency = argv[i]
@@ -103,6 +112,8 @@ def type_of(argv):
         return 'default'
     elif len(argv) == 3:
         return 'normal'
+    elif len(argv) == 2:
+        return 'single'
 
 
 def main():
@@ -127,7 +138,13 @@ def main():
         t = do.trans_currency(to, from_, amount, ACCURACY)
         result.append(t)
     elif type_of(argv) == 'single':
-        pass
+        amount = float(argv[1])
+        CURRENCY_DICT = DEFAULT_CURRENCY.copy()
+        CURRENCY_DICT['main'] = argv[0:1]
+        for i in combination_of_list(2, CURRENCY_DICT):
+            t = {}
+            t = do.trans_currency(i[0], i[1], amount, ACCURACY)
+            result.append(t)
 
     print_result(result)
 
@@ -140,5 +157,5 @@ if __name__ == '__main__':
         AlfredXmlGenerator.print_error('Invalid Key', e.text)
     except UnicodeDecodeError:
         AlfredXmlGenerator.print_error("Sorry...", "But we don't support Chinese... yet")
-    # except:
-    #     AlfredXmlGenerator.print_error('Unknown', 'a')
+    except:
+        AlfredXmlGenerator.print_error('Unknown', 'a')
