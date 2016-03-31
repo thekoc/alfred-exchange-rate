@@ -3,7 +3,6 @@
 from alfred_xml import AlfredXmlGenerator
 from finance_data_operator import FinanceDataOperator
 import os
-import sys
 import urllib
 import argparse
 
@@ -23,6 +22,12 @@ DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': [
 pwd = os.getcwd()
 pic_path = os.path.join(pwd, 'flags')
 default_icon = os.path.join(pic_path, 'DEFAULT.png')
+
+
+class ThrowingArgumentParser(argparse.ArgumentParser):
+
+    def error(self, message):
+        raise SyntaxError(message)
 
 
 def combination_of_dict(dic):
@@ -55,14 +60,6 @@ def get_newest_data():
     return do
 
 
-def get_argv():
-    if len(sys.argv) == 1:
-        return None
-    else:
-        argv = [i.upper() for i in sys.argv[1:]]
-        return argv
-
-
 def print_result(result):
     alfred_xml = AlfredXmlGenerator()
 
@@ -77,68 +74,34 @@ def print_result(result):
     alfred_xml.print_xml()
 
 
-def check_set_syntax(argv, do):
-    synatax_error = SyntaxError()
-    synatax_error.text = 'usage: set default <country_code>'
-    if argv[0] == 'SET':
-        if 'DEFAULT' in argv:
-            if len(argv) == 3:
-                if do.get_multifunctional(argv[2]) is None:
-                    currency = argv[2]
-                    key_error = KeyError()
-                    key_error.key = currency
-                    key_error.text = "Can't find key: %s" % currency
-                    raise key_error
-            else:
-                raise synatax_error
-        else:
-            raise synatax_error
+def get_argv():
+    parser = ThrowingArgumentParser()
+    parser.add_argument('currency_list', nargs='*')
+    parser.add_argument('amount', type=float)
+    parser.add_argument('--set', nargs='+')
+    return parser.parse_args()
 
 
 def check_syntax(argv, do):
-    synatax_error = SyntaxError()
-    synatax_error.text = 'usage: <code> <code> <amount> or <country> <country> <amount> or <amount>'
-    if 'SET' == argv[0]:
-        check_set_syntax(argv, do)
-    elif len(argv) == 1:
-        try:
-            float(argv[0])
-        except ValueError:
-            raise synatax_error
-    elif len(argv) == 2:
-        currency = argv[0]
+    for currency in argv.currency_list:
         if do.get_multifunctional(currency) is None:
             key_error = KeyError()
             key_error.key = currency
-            key_error.text = "Can't find key: %s" % currency
+            key_error.msg = "Can't find key: %s" % currency
             raise key_error
-    elif len(argv) == 3:
-        for i in range(2):
-            currency = argv[i]
-            if do.get_multifunctional(currency) is None:
-                key_error = KeyError()
-                key_error.key = currency
-                key_error.text = "Can't find key: %s" % currency
-                raise key_error
-        try:
-            float(argv[2])
-        except ValueError:
-            raise synatax_error
-    else:
-        raise synatax_error
 
 
 def type_of(argv):
     if argv is None:
         return
-    elif len(argv) == 3 and argv[0] == 'SET' and argv[1] == 'DEFAULT':
+    elif argv.set is not None:
         return 'set_default'
-    elif len(argv) == 1:
+    elif len(argv.currency_list) == 0:
         return 'default'
-    elif len(argv) == 3:
-        return 'normal'
-    elif len(argv) == 2:
+    elif len(argv.currency_list) == 1:
         return 'single'
+    elif len(argv.currency_list) == 2:
+        return 'normal'
 
 
 def format_result(result, do):
@@ -148,38 +111,42 @@ def format_result(result, do):
                 i[key] = do.get_currency_from_anything(i[key])
 
 
-def main():
-    do = get_newest_data()
-    argv = get_argv()
-    check_syntax(argv, do)
+def handle_argv(argv, do):
     result = []
     if type_of(argv) is None:
         return
     elif type_of(argv) == 'default':
-        amount = float(argv[0])
+        amount = argv.amount
         for i in combination_of_dict(DEFAULT_CURRENCY):
             t = {}
             t = do.trans_currency(i[0], i[1], amount, ACCURACY)
             result.append(t)
     elif type_of(argv) == 'normal':
-        from_ = do.map_to_code(argv[0])
-        to = do.map_to_code(argv[1])
-        amount = float(argv[2])
+        from_ = do.map_to_code(argv.currency_list[0])
+        to = do.map_to_code(argv.currency_list[1])
+        amount = argv.amount
         t = do.trans_currency(from_, to, amount, ACCURACY)
         result.append(t)
         t = do.trans_currency(to, from_, amount, ACCURACY)
         result.append(t)
     elif type_of(argv) == 'single':
-        amount = float(argv[1])
+        amount = argv.amount
         CURRENCY_DICT = DEFAULT_CURRENCY.copy()
-        CURRENCY_DICT['main'] = argv[0:1]
+        CURRENCY_DICT['main'] = argv.currency_list[0]
         for i in combination_of_dict(CURRENCY_DICT):
             t = {}
             t = do.trans_currency(i[0], i[1], amount, ACCURACY)
             result.append(t)
     elif type_of(argv) == 'set_default':
-        DEFAULT_CURRENCY['main'] = argv[2]
+        pass
+    # return result
 
+
+def main():
+    do = get_newest_data()
+    argv = get_argv()
+    check_syntax(argv, do)
+    result = handle_argv(argv, do)
     format_result(result, do)
     print_result(result)
 
@@ -187,11 +154,11 @@ if __name__ == '__main__':
     try:
         main()
     except SyntaxError as e:
-        AlfredXmlGenerator.print_error('Incorrect Syntax', e.text)
+        AlfredXmlGenerator.print_error({'Incorrect Syntax': e.msg})
     except KeyError as e:
-        AlfredXmlGenerator.print_error('Invalid Key', e.text)
+        AlfredXmlGenerator.print_error({'Invalid Key': e.msg})
     except UnicodeDecodeError:
         AlfredXmlGenerator.print_error(
-            "Sorry...", "But we don't support Chinese... yet")
+            {"Sorry...": "But we don't support Chinese... yet"})
     # except:
     #     AlfredXmlGenerator.print_error('Unknown', 'a')

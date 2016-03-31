@@ -21,7 +21,7 @@ class AlfredXmlGenerator(object):
         self._uid += 1
         return str(self._uid - 1)
 
-    def add_item(self, title, subtitle, icon='default_icon', arg=None, autocomplete=None):
+    def add_item(self, title, subtitle, icon='default_icon.png', arg=None, autocomplete=None):
         doc = self.doc
         item_node = doc.createElement('item')
         item_node.setAttribute('uid', self.uid)
@@ -43,7 +43,8 @@ class AlfredXmlGenerator(object):
         print(b.decode('utf-8'))
 
     @classmethod
-    def print_error(cls, title, content):
+    def print_error(cls, info_dict):
         tem = AlfredXmlGenerator()
-        tem.add_item(title, content, icon='error_icon')
+        for title in info_dict:
+            tem.add_item(title=title, subtitle=info_dict[title], icon='error_icon.png')
         tem.print_xml()
