@@ -5,6 +5,7 @@ from finance_data_operator import FinanceDataOperator
 import os
 import sys
 import urllib
+import argparse
 
 # f_handle = open('display.out', 'w')
 # x = sys.stdout.encoding
@@ -17,13 +18,14 @@ FINANCE_FILE = 'exchange_rate.json'
 MAP_FILE = 'codes_map.json'
 CHECK_FREQUENCE = 7
 ACCURACY = 3
-DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': ['CNY', 'JPY', 'USD', 'HKD', 'EUR']}
+DEFAULT_CURRENCY = {'main': ['CNY'], 'sub': [
+    'CNY', 'JPY', 'USD', 'HKD', 'EUR']}
 pwd = os.getcwd()
 pic_path = os.path.join(pwd, 'flags')
 default_icon = os.path.join(pic_path, 'DEFAULT.png')
 
 
-def combination_of_list(l, dic):
+def combination_of_dict(dic):
     result = []
     for m in dic['main']:
         for s in dic['sub']:
@@ -66,11 +68,12 @@ def print_result(result):
 
     for i in result:
         display_text = i['from'] + ' -> ' + i['to']
-        icon_path = os.path.join(pic_path, i['from']+'.png')
+        icon_path = os.path.join(pic_path, i['from'] + '.png')
         if os.path.isfile(icon_path):
             alfred_xml.add_item(display_text, str(i['price']), icon=icon_path)
         else:
-            alfred_xml.add_item(display_text, str(i['price']), icon=default_icon)
+            alfred_xml.add_item(display_text, str(
+                i['price']), icon=default_icon)
     alfred_xml.print_xml()
 
 
@@ -154,7 +157,7 @@ def main():
         return
     elif type_of(argv) == 'default':
         amount = float(argv[0])
-        for i in combination_of_list(2, DEFAULT_CURRENCY):
+        for i in combination_of_dict(DEFAULT_CURRENCY):
             t = {}
             t = do.trans_currency(i[0], i[1], amount, ACCURACY)
             result.append(t)
@@ -170,7 +173,7 @@ def main():
         amount = float(argv[1])
         CURRENCY_DICT = DEFAULT_CURRENCY.copy()
         CURRENCY_DICT['main'] = argv[0:1]
-        for i in combination_of_list(2, CURRENCY_DICT):
+        for i in combination_of_dict(CURRENCY_DICT):
             t = {}
             t = do.trans_currency(i[0], i[1], amount, ACCURACY)
             result.append(t)
@@ -188,6 +191,7 @@ if __name__ == '__main__':
     except KeyError as e:
         AlfredXmlGenerator.print_error('Invalid Key', e.text)
     except UnicodeDecodeError:
-        AlfredXmlGenerator.print_error("Sorry...", "But we don't support Chinese... yet")
+        AlfredXmlGenerator.print_error(
+            "Sorry...", "But we don't support Chinese... yet")
     # except:
     #     AlfredXmlGenerator.print_error('Unknown', 'a')
