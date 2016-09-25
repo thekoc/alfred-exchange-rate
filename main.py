@@ -3,8 +3,9 @@
 from alfred_xml import AlfredXmlGenerator
 from finance_data_operator import FinanceDataOperator
 import os
-import urllib
+import urllib2
 import argparse
+import sys
 
 # f_handle = open('display.out', 'w')
 # x = sys.stdout.encoding
@@ -12,7 +13,8 @@ import argparse
 # w_handle = open('error.out', 'w')
 # sys.stderr = w_handle
 
-FINANCE_URL = 'http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote?format=json'
+# FINANCE_URL = 'http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote?format=json'
+FINANCE_URL = 'http://api.fixer.io/latest?base=USD'
 FINANCE_FILE = 'exchange_rate.json'
 MAP_FILE = 'codes_map.json'
 CHECK_FREQUENCE = 7
@@ -46,7 +48,9 @@ def abs_path(path):
 
 def get_newest_data():
     def download_data():
-        urllib.urlretrieve(FINANCE_URL, FINANCE_FILE)
+        f = urllib2.urlopen(FINANCE_URL)
+        with open(FINANCE_FILE, "wb") as code:
+            code.write(f.read())
         return FinanceDataOperator(FINANCE_FILE, MAP_FILE)
 
     if not os.path.isfile(FINANCE_FILE):
@@ -79,7 +83,9 @@ def get_argv():
     parser.add_argument('currency_list', nargs='*')
     parser.add_argument('amount', type=float)
     parser.add_argument('--set', nargs='+')
-    return parser.parse_args()
+    argv = parser.parse_args()
+    argv.currency_list = [i.upper() for i in argv.currency_list]
+    return argv
 
 
 def check_syntax(argv, do):
@@ -132,14 +138,13 @@ def handle_argv(argv, do):
     elif type_of(argv) == 'single':
         amount = argv.amount
         CURRENCY_DICT = DEFAULT_CURRENCY.copy()
-        CURRENCY_DICT['main'] = argv.currency_list[0]
+        CURRENCY_DICT['main'] = [argv.currency_list[0]]
         for i in combination_of_dict(CURRENCY_DICT):
-            t = {}
             t = do.trans_currency(i[0], i[1], amount, ACCURACY)
             result.append(t)
     elif type_of(argv) == 'set_default':
         pass
-    # return result
+    return result
 
 
 def main():
@@ -154,11 +159,12 @@ if __name__ == '__main__':
     try:
         main()
     except SyntaxError as e:
-        AlfredXmlGenerator.print_error({'Incorrect Syntax': e.msg})
+        AlfredXmlGenerator.print_error({'Incorrect Syntax': e.msg if hasattr(e, 'msg') else ''})
+        raise e
     except KeyError as e:
-        AlfredXmlGenerator.print_error({'Invalid Key': e.msg})
-    except UnicodeDecodeError:
-        AlfredXmlGenerator.print_error(
-            {"Sorry...": "But we don't support Chinese... yet"})
+        AlfredXmlGenerator.print_error({'Incorrect Syntax': e.msg if hasattr(e, 'msg') else ''})
+        raise e
+    # except UnicodeDecodeError:
+    #     AlfredXmlGenerator.print_error({"Sorry...": "But we don't support Chinese... yet"})
     # except:
     #     AlfredXmlGenerator.print_error('Unknown', 'a')

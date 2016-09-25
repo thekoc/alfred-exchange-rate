@@ -5,7 +5,7 @@ import datetime
 class FinanceDataOperator(object):
     def __init__(self, resource_name, map_name):
         with open(resource_name, 'r') as f:
-            self.resources = json.load(f)['list']['resources']
+            self.resources = json.load(f)
         with open(map_name, 'r') as f:
             self.maps = json.load(f)
 
@@ -24,11 +24,9 @@ class FinanceDataOperator(object):
             return anything
 
     def get_time(self):
-        raw_time = self.resources[0]['resource']['fields']['utctime']
-        raw_time = raw_time.split('T')[0]
-        time_list = [int(i) for i in raw_time.split('-')]
-        days = datetime.datetime(time_list[0], time_list[1], time_list[2])
-        return days
+        raw_time = self.resources['date']
+        date = datetime.datetime.strptime(raw_time, '%Y-%m-%d')
+        return date
 
     def days_til_now(self):
         return (datetime.datetime.now() - self.get_time()).days
@@ -48,11 +46,8 @@ class FinanceDataOperator(object):
         else:
             if name == 'USD':
                 return 1.0
-            resources = self.resources
-            for resource in resources:
-                r = resource['resource']
-                if r['fields']['name'] == 'USD/' + str(name):
-                    return float(r['fields']['price'])
+            else:
+                return self.resources['rates'][name]
 
     def map_to_code(self, name):
         name = name.upper()
