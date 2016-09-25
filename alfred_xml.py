@@ -39,8 +39,8 @@ class AlfredXmlGenerator(object):
             f.write(self.doc.toprettyxml(encoding='utf-8').decode())
 
     def print_xml(self):
-        b = self.doc.toxml(encoding='utf-8')
-        print(b.decode('utf-8'))
+        b = self.doc.toxml('utf8')
+        print(b)
 
     @classmethod
     def print_error(cls, info_dict):

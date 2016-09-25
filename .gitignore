@@ -113,4 +113,5 @@ Temporary Items
 *.dSYM
 *.out
 *.pyc
+*.json
 
