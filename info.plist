@@ -19,6 +19,8 @@
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
 				<key>argumenttype</key>
 				<integer>0</integer>
 				<key>escaping</key>
@@ -38,6 +40,12 @@
 				<key>script</key>
 				<string>export LANG="en_US.UTF-8"
 python main.py {query}</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string></string>
 				<key>title</key>
 				<string>hi</string>
 				<key>type</key>
@@ -50,7 +58,7 @@ python main.py {query}</string>
 			<key>uid</key>
 			<string>E825B0FB-82A4-4C51-8EC3-F18FB0123A9E</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>2</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -59,8 +67,10 @@ python main.py {query}</string>
 	<dict>
 		<key>E825B0FB-82A4-4C51-8EC3-F18FB0123A9E</key>
 		<dict>
+			<key>xpos</key>
+			<integer>230</integer>
 			<key>ypos</key>
-			<real>10</real>
+			<integer>160</integer>
 		</dict>
 	</dict>
 	<key>webaddress</key>

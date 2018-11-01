@@ -14,7 +14,7 @@ import sys
 # sys.stderr = w_handle
 
 # FINANCE_URL = 'http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote?format=json'
-FINANCE_URL = 'http://api.fixer.io/latest?base=USD'
+FINANCE_URL = 'https://api.exchangeratesapi.io/latest?base=USD'
 FINANCE_FILE = 'exchange_rate.json'
 MAP_FILE = 'codes_map.json'
 CHECK_FREQUENCE = 7
